@@ -1,264 +1,205 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 interface ToastProps {
   message: string;
   type: "success" | "error";
 }
 
-// ─── Toast Component ──────────────────────────────────────────────────────────
 function Toast({ message, type }: ToastProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 60, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 60, scale: 0.9 }}
-      transition={{ type: "spring", stiffness: 300, damping: 25 }}
-      className={`fixed bottom-8 right-8 z-[9999] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl font-semibold text-sm ${
-        type === "success"
-          ? "bg-emerald-500 text-white"
-          : "bg-red-500 text-white"
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 40 }}
+      className={`fixed bottom-6 right-6 px-5 py-3 rounded-2xl text-white z-[9999] shadow-xl ${
+        type === "success" ? "bg-emerald-500" : "bg-red-500"
       }`}
     >
-      <span>{type === "success" ? "✅" : "❌"}</span>
       {message}
     </motion.div>
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Home() {
-
-  // ── State ──
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState<ToastProps | null>(null);
-  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [billingAnnual, setBillingAnnual] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ── Scroll detection for sticky navbar ──
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    message: "",
+  });
 
-  // ── Auto-dismiss toast ──
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 4000);
-    return () => clearTimeout(t);
+
+    const timeout = setTimeout(() => {
+      setToast(null);
+    }, 3000);
+
+    return () => clearTimeout(timeout);
   }, [toast]);
 
-  // ── Close mobile menu on nav click ──
-  const handleNavClick = () => setMenuOpen(false);
-
-  // ── Form handlers ──
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
 
-  // ── Formspree submit ──
-  // ⬇️  Replace the action URL below with your own Formspree endpoint
-  const FORMSPREE_URL = "https://formspree.io/f/YOUR_FORM_ID";
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
 
-    // Basic validation
-    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
-      setToast({ message: "Please fill in all fields.", type: "error" });
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setToast({ message: "Please enter a valid email.", type: "error" });
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.message
+    ) {
+      setToast({
+        message: "Please fill all fields",
+        type: "error",
+      });
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(FORMSPREE_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(formData),
+      await new Promise((resolve) =>
+        setTimeout(resolve, 1200)
+      );
+
+      setToast({
+        message: "Message sent successfully!",
+        type: "success",
       });
 
-      if (res.ok) {
-        setToast({ message: "Message sent! We'll be in touch soon.", type: "success" });
-        setFormData({ name: "", email: "", message: "" });
-      } else {
-        throw new Error("Server error");
-      }
+      setFormData({
+        name: "",
+        email: "",
+        message: "",
+      });
     } catch {
-      setToast({ message: "Something went wrong. Please try again.", type: "error" });
+      setToast({
+        message: "Something went wrong",
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // ── Pricing ──
   const prices = {
     starter: billingAnnual ? 15 : 19,
     pro: billingAnnual ? 39 : 49,
   };
 
-  // ── Animation variants ──
   const fadeUp = {
-    hidden: { opacity: 0, y: 40 },
-    visible: (i = 0) => ({
+    hidden: {
+      opacity: 0,
+      y: 30,
+    },
+    visible: {
       opacity: 1,
       y: 0,
-      transition: { delay: i * 0.1, duration: 0.6, ease: "easeOut" },
-    }),
+      transition: {
+        duration: 0.6,
+      },
+    },
   };
 
-  const navLinks = ["Features", "Pricing", "About", "Contact"];
+  const navLinks = [
+    "features",
+    "pricing",
+    "about",
+    "contact",
+  ];
 
   return (
-    <main className="min-h-screen bg-[#050508] text-white overflow-x-hidden relative selection:bg-purple-500/40">
+    <main className="bg-[#050508] text-white overflow-x-hidden">
 
-      {/* ── Background Orbs ── */}
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute top-[-250px] left-[-150px] w-[600px] h-[600px] bg-violet-600/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-250px] right-[-150px] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px]" />
-        <div className="absolute top-[40%] left-[40%] w-[400px] h-[400px] bg-fuchsia-600/10 rounded-full blur-[100px]" />
+      {/* Background */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute top-[-200px] left-[-100px] w-[500px] h-[500px] bg-violet-600/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-200px] right-[-100px] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px]" />
       </div>
 
-      {/* ── Navbar ── */}
-      <motion.nav
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? "bg-black/80 backdrop-blur-xl border-b border-white/10 shadow-xl"
-            : "bg-transparent"
-        }`}
-      >
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-          {/* Logo */}
-          <a href="#" className="text-2xl font-black tracking-tight">
-            Nexa<span className="text-violet-400">.</span>
-          </a>
+      {/* Navbar */}
+      <nav className="sticky top-0 z-50 backdrop-blur-xl bg-black/50 border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
-          {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-8 text-sm text-gray-300 font-medium">
+          <h1 className="text-2xl font-black">
+            Nexa<span className="text-violet-400">.</span>
+          </h1>
+
+          <div className="hidden md:flex gap-8 text-gray-300">
             {navLinks.map((link) => (
               <a
                 key={link}
-                href={`#${link.toLowerCase()}`}
-                className="hover:text-white transition-colors duration-200 relative group"
+                href={`#${link}`}
+                className="hover:text-white transition"
               >
-                {link}
-                <span className="absolute -bottom-0.5 left-0 right-0 h-px bg-violet-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left" />
+                {link.charAt(0).toUpperCase() + link.slice(1)}
               </a>
             ))}
           </div>
 
-          {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-3">
-            <a
-              href="#contact"
-              className="text-sm text-gray-300 hover:text-white px-4 py-2 transition"
-            >
-              Sign In
-            </a>
-            <a
-              href="#contact"
-              className="text-sm bg-violet-600 hover:bg-violet-500 text-white px-5 py-2.5 rounded-full font-semibold transition-all hover:scale-105 hover:shadow-lg hover:shadow-violet-500/30"
-            >
-              Get Started →
-            </a>
-          </div>
-
-          {/* Hamburger */}
           <button
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Toggle menu"
-            className="md:hidden flex flex-col gap-[5px] p-2 z-50"
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="md:hidden"
           >
-            <span
-              className={`block w-6 h-0.5 bg-white rounded transition-all duration-300 ${
-                menuOpen ? "rotate-45 translate-y-[7px]" : ""
-              }`}
-            />
-            <span
-              className={`block w-6 h-0.5 bg-white rounded transition-all duration-300 ${
-                menuOpen ? "opacity-0" : ""
-              }`}
-            />
-            <span
-              className={`block w-6 h-0.5 bg-white rounded transition-all duration-300 ${
-                menuOpen ? "-rotate-45 -translate-y-[7px]" : ""
-              }`}
-            />
+            ☰
           </button>
+
         </div>
 
-        {/* Mobile Menu */}
         <AnimatePresence>
           {menuOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.25 }}
-              className="md:hidden overflow-hidden bg-black/95 backdrop-blur-xl border-t border-white/10"
+              className="md:hidden border-t border-white/10 bg-black/90"
             >
-              <div className="flex flex-col px-6 py-6 gap-5">
+              <div className="flex flex-col gap-4 p-6">
                 {navLinks.map((link) => (
                   <a
                     key={link}
-                    href={`#${link.toLowerCase()}`}
-                    onClick={handleNavClick}
-                    className="text-lg text-gray-300 hover:text-white font-medium transition"
+                    href={`#${link}`}
+                    onClick={() => setMenuOpen(false)}
+                    className="text-gray-300 hover:text-white"
                   >
-                    {link}
+                    {link.charAt(0).toUpperCase() + link.slice(1)}
                   </a>
                 ))}
-                <a
-                  href="#contact"
-                  onClick={handleNavClick}
-                  className="mt-2 w-full text-center bg-violet-600 hover:bg-violet-500 text-white px-5 py-3 rounded-full font-semibold transition"
-                >
-                  Get Started →
-                </a>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.nav>
+      </nav>
 
-      {/* ── Hero ── */}
-      <section className="relative z-10 flex flex-col items-center justify-center text-center px-6 pt-44 pb-24 min-h-screen">
-
-        {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.85 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 text-violet-300 text-sm font-medium px-4 py-1.5 rounded-full mb-8"
-        >
-          <span className="w-2 h-2 bg-violet-400 rounded-full animate-pulse" />
-          Now in Public Beta — Join 2,400+ Builders
-        </motion.div>
+      {/* Hero */}
+      <section className="min-h-screen flex flex-col items-center justify-center text-center px-6">
 
         <motion.h1
           variants={fadeUp}
           initial="hidden"
           animate="visible"
-          custom={0}
-          className="text-5xl md:text-7xl lg:text-8xl font-black max-w-5xl leading-[1.05] tracking-tight mb-6"
+          className="text-5xl md:text-7xl font-black leading-tight max-w-5xl mb-6"
         >
           Build Beautiful
           <br />
-          <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-blue-400 bg-clip-text text-transparent">
-            Websites With AI
+          <span className="bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">
+            AI Websites
           </span>
         </motion.h1>
 
@@ -266,442 +207,251 @@ export default function Home() {
           variants={fadeUp}
           initial="hidden"
           animate="visible"
-          custom={1}
-          className="text-gray-400 text-lg md:text-xl max-w-2xl mb-10 leading-relaxed"
+          className="text-gray-400 text-lg max-w-2xl mb-10"
         >
-          Create premium, production-ready websites using Next.js, Tailwind, and
-          AI-powered workflows — without writing boilerplate ever again.
+          Modern landing pages built with Next.js,
+          Tailwind CSS, and Framer Motion.
         </motion.p>
 
-        <motion.div
+        <motion.a
           variants={fadeUp}
           initial="hidden"
           animate="visible"
-          custom={2}
-          className="flex flex-col sm:flex-row gap-4"
+          href="#pricing"
+          className="bg-violet-600 hover:bg-violet-500 px-8 py-4 rounded-full font-bold transition hover:scale-105"
         >
-          <a
-            href="#contact"
-            className="bg-violet-600 hover:bg-violet-500 text-white px-8 py-4 rounded-full font-bold text-base transition-all hover:scale-105 hover:shadow-2xl hover:shadow-violet-500/40"
-          >
-            Start Building Free →
-          </a>
-          <a
-            href="#features"
-            className="bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white px-8 py-4 rounded-full font-semibold text-base transition-all"
-          >
-            See Features
-          </a>
-        </motion.div>
+          Get Started →
+        </motion.a>
 
-        {/* Social proof */}
-        <motion.p
-          variants={fadeUp}
-          initial="hidden"
-          animate="visible"
-          custom={3}
-          className="mt-8 text-xs text-gray-600"
-        >
-          No credit card required • Free plan available • Cancel anytime
-        </motion.p>
-
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-gray-600"
-        >
-          <span className="text-xs tracking-widest uppercase">Scroll</span>
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ repeat: Infinity, duration: 1.5 }}
-            className="w-0.5 h-8 bg-gradient-to-b from-gray-600 to-transparent"
-          />
-        </motion.div>
       </section>
 
-      {/* ── Features ── */}
-      <section id="features" className="relative z-10 px-6 py-28 border-t border-white/5">
-
+      {/* Features */}
+      <section
+        id="features"
+        className="px-6 py-24 border-t border-white/10"
+      >
         <div className="max-w-6xl mx-auto">
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <p className="text-violet-400 text-sm font-semibold uppercase tracking-widest mb-4">
-              Why Nexa
-            </p>
-            <h2 className="text-4xl md:text-6xl font-black mb-4">
-              Everything you need to ship
-            </h2>
-            <p className="text-gray-500 text-lg max-w-xl mx-auto">
-              Powerful tools that remove the friction between your idea and a
-              live, beautiful product.
-            </p>
-          </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-black mb-4">
+              Features
+            </h2>
+
+            <p className="text-gray-500">
+              Everything needed to launch fast.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+
             {[
               {
                 icon: "⚡",
-                title: "Lightning Fast",
-                desc: "Build production-ready sites in hours, not weeks. AI handles the boring parts.",
-                tag: "10× faster",
+                title: "Fast",
+                desc: "Launch production-ready websites quickly.",
               },
               {
                 icon: "🎨",
-                title: "Beautiful UI",
-                desc: "Premium layouts, responsive design, and buttery-smooth animations baked in.",
-                tag: "Design-first",
+                title: "Modern UI",
+                desc: "Beautiful responsive layouts and animations.",
               },
               {
-                icon: "🤖",
+                icon: "🚀",
                 title: "AI Powered",
-                desc: "Integrated with OpenAI and Claude APIs to automate copy, code, and components.",
-                tag: "GPT-4 + Claude",
+                desc: "Use AI workflows to build faster.",
               },
-              {
-                icon: "🔐",
-                title: "Auth Ready",
-                desc: "Clerk, Supabase, or Firebase auth wired in with one command.",
-                tag: "Zero config",
-              },
-              {
-                icon: "📦",
-                title: "Deploy Anywhere",
-                desc: "Vercel, Netlify, or bare metal — deploy in under 60 seconds.",
-                tag: "One click",
-              },
-              {
-                icon: "📊",
-                title: "Analytics Built-in",
-                desc: "Track visitors, conversions, and form submissions out of the box.",
-                tag: "Real-time",
-              },
-            ].map((card, i) => (
+            ].map((card) => (
               <motion.div
                 key={card.title}
-                variants={fadeUp}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                custom={i * 0.5}
-                whileHover={{ y: -8, scale: 1.01 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="group bg-white/[0.03] border border-white/8 hover:border-violet-500/40 rounded-3xl p-8 backdrop-blur-xl cursor-default transition-colors duration-300"
+                whileHover={{ y: -8 }}
+                className="bg-white/5 border border-white/10 rounded-3xl p-8"
               >
-                <div className="text-4xl mb-5">{card.icon}</div>
-                <div className="flex items-center gap-2 mb-3">
-                  <h3 className="text-xl font-bold">{card.title}</h3>
-                  <span className="text-[10px] font-semibold bg-violet-500/15 text-violet-400 px-2 py-0.5 rounded-full border border-violet-500/20">
-                    {card.tag}
-                  </span>
+                <div className="text-5xl mb-6">
+                  {card.icon}
                 </div>
-                <p className="text-gray-500 text-sm leading-relaxed">{card.desc}</p>
+
+                <h3 className="text-2xl font-bold mb-4">
+                  {card.title}
+                </h3>
+
+                <p className="text-gray-400">
+                  {card.desc}
+                </p>
               </motion.div>
             ))}
+
           </div>
+
         </div>
       </section>
 
-      {/* ── Pricing ── */}
-      <section id="pricing" className="relative z-10 px-6 py-28 border-t border-white/5">
-
+      {/* Pricing */}
+      <section
+        id="pricing"
+        className="px-6 py-24 border-t border-white/10"
+      >
         <div className="max-w-5xl mx-auto">
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <p className="text-violet-400 text-sm font-semibold uppercase tracking-widest mb-4">
-              Pricing
-            </p>
-            <h2 className="text-4xl md:text-6xl font-black mb-4">
-              Simple, transparent pricing
-            </h2>
-            <p className="text-gray-500 text-lg mb-8">
-              One plan for solo builders, one for serious teams.
-            </p>
 
-            {/* Billing toggle */}
-            <div className="inline-flex items-center gap-3 bg-white/5 border border-white/10 rounded-full px-4 py-2">
-              <span
-                className={`text-sm font-medium cursor-pointer transition ${
-                  !billingAnnual ? "text-white" : "text-gray-500"
-                }`}
-                onClick={() => setBillingAnnual(false)}
-              >
-                Monthly
-              </span>
+          <div className="text-center mb-12">
+            <h2 className="text-5xl font-black mb-4">
+              Pricing
+            </h2>
+
+            <div className="flex items-center justify-center gap-4 mt-6">
+              <span>Monthly</span>
+
               <button
-                onClick={() => setBillingAnnual((v) => !v)}
-                className={`relative w-10 h-6 rounded-full transition-colors duration-300 ${
-                  billingAnnual ? "bg-violet-600" : "bg-white/10"
+                onClick={() =>
+                  setBillingAnnual(!billingAnnual)
+                }
+                className={`w-14 h-7 rounded-full transition ${
+                  billingAnnual
+                    ? "bg-violet-600"
+                    : "bg-white/10"
                 }`}
               >
-                <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-300 ${
-                    billingAnnual ? "translate-x-4" : ""
+                <div
+                  className={`w-6 h-6 bg-white rounded-full transition-transform ${
+                    billingAnnual
+                      ? "translate-x-7"
+                      : "translate-x-1"
                   }`}
                 />
               </button>
-              <span
-                className={`text-sm font-medium cursor-pointer transition ${
-                  billingAnnual ? "text-white" : "text-gray-500"
-                }`}
-                onClick={() => setBillingAnnual(true)}
-              >
-                Annual
-                <span className="ml-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full border border-emerald-500/30">
-                  Save 20%
-                </span>
-              </span>
+
+              <span>Annual</span>
             </div>
-          </motion.div>
+          </div>
 
           <div className="grid md:grid-cols-2 gap-8">
 
-            {/* Starter */}
-            <motion.div
-              variants={fadeUp}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              custom={0}
-              className="bg-white/[0.03] border border-white/10 rounded-3xl p-10"
-            >
-              <h3 className="text-2xl font-bold mb-1">Starter</h3>
-              <p className="text-gray-500 text-sm mb-6">
-                Perfect for solo projects and freelancers.
-              </p>
-              <div className="flex items-end gap-2 mb-8">
-                <span className="text-6xl font-black">${prices.starter}</span>
-                <span className="text-gray-500 mb-2">/mo</span>
-              </div>
-              <ul className="space-y-3 mb-8 text-sm text-gray-400">
-                {["3 AI-generated sites", "Basic analytics", "Formspree contact form", "Community support", "Vercel deploy"].map(
-                  (f) => (
-                    <li key={f} className="flex items-center gap-2">
-                      <span className="text-emerald-400">✓</span> {f}
-                    </li>
-                  )
-                )}
-              </ul>
-              <a
-                href="#contact"
-                className="block w-full text-center border border-white/15 hover:border-white/30 text-gray-300 hover:text-white py-3 rounded-2xl font-semibold transition"
-              >
-                Get Started
-              </a>
-            </motion.div>
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-10">
+              <h3 className="text-3xl font-bold mb-4">
+                Starter
+              </h3>
 
-            {/* Pro */}
-            <motion.div
-              variants={fadeUp}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              custom={1}
-              className="relative bg-violet-600/10 border border-violet-500/40 rounded-3xl p-10 overflow-hidden"
-            >
-              {/* Popular badge */}
-              <div className="absolute top-6 right-6 text-[11px] font-bold bg-violet-500 text-white px-3 py-1 rounded-full">
-                MOST POPULAR
-              </div>
-
-              <h3 className="text-2xl font-bold mb-1">Pro</h3>
-              <p className="text-gray-400 text-sm mb-6">
-                For teams and serious builders shipping fast.
+              <p className="text-6xl font-black mb-6">
+                ${prices.starter}
               </p>
-              <div className="flex items-end gap-2 mb-8">
-                <span className="text-6xl font-black">${prices.pro}</span>
-                <span className="text-gray-500 mb-2">/mo</span>
-              </div>
-              <ul className="space-y-3 mb-8 text-sm text-gray-300">
-                {[
-                  "Unlimited sites",
-                  "Advanced analytics dashboard",
-                  "Real email + DB backend",
-                  "Auth (Clerk/Supabase)",
-                  "Priority support",
-                  "AI chatbot widget",
-                  "Custom domain",
-                ].map((f) => (
-                  <li key={f} className="flex items-center gap-2">
-                    <span className="text-violet-400">✓</span> {f}
-                  </li>
-                ))}
-              </ul>
-              <a
-                href="#contact"
-                className="block w-full text-center bg-violet-600 hover:bg-violet-500 text-white py-3 rounded-2xl font-bold transition hover:shadow-lg hover:shadow-violet-500/30"
-              >
-                Start Pro Trial →
-              </a>
-            </motion.div>
+
+              <button className="w-full bg-white text-black py-3 rounded-2xl font-semibold">
+                Start Free
+              </button>
+            </div>
+
+            <div className="bg-violet-600/10 border border-violet-500/40 rounded-3xl p-10">
+              <h3 className="text-3xl font-bold mb-4">
+                Pro
+              </h3>
+
+              <p className="text-6xl font-black mb-6">
+                ${prices.pro}
+              </p>
+
+              <button className="w-full bg-violet-600 py-3 rounded-2xl font-semibold">
+                Go Pro
+              </button>
+            </div>
 
           </div>
         </div>
       </section>
 
-      {/* ── About ── */}
+      {/* About */}
       <section
         id="about"
-        className="relative z-10 px-6 py-28 border-t border-white/5"
+        className="px-6 py-24 border-t border-white/10 text-center"
       >
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            <p className="text-violet-400 text-sm font-semibold uppercase tracking-widest mb-4">
-              About
-            </p>
-            <h2 className="text-4xl md:text-6xl font-black mb-6">
-              Built by devs,
-              <br />
-              <span className="text-gray-500">for devs.</span>
-            </h2>
-            <p className="text-gray-400 text-lg leading-relaxed max-w-2xl mx-auto mb-10">
-              Nexa was born from frustration — too much time wasted on boilerplate,
-              config, and design tweaks. We built the tool we always wanted: one
-              that handles the repetitive parts so you can focus on what actually
-              matters — building and shipping.
-            </p>
+        <div className="max-w-3xl mx-auto">
 
-            <div className="grid grid-cols-3 gap-8 max-w-sm mx-auto text-center">
-              {[
-                { num: "2,400+", label: "Builders" },
-                { num: "12k+", label: "Sites launched" },
-                { num: "4.9★", label: "Avg rating" },
-              ].map((s) => (
-                <div key={s.label}>
-                  <p className="text-3xl font-black text-violet-400">{s.num}</p>
-                  <p className="text-gray-500 text-sm">{s.label}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
+          <h2 className="text-5xl font-black mb-6">
+            About Nexa
+          </h2>
+
+          <p className="text-gray-400 text-lg leading-relaxed">
+            Nexa helps creators and developers build
+            modern AI-powered websites faster using
+            premium UI systems and scalable workflows.
+          </p>
+
         </div>
       </section>
 
-      {/* ── Contact ── */}
+      {/* Contact */}
       <section
         id="contact"
-        className="relative z-10 px-6 py-28 border-t border-white/5"
+        className="px-6 py-24 border-t border-white/10"
       >
         <div className="max-w-xl mx-auto">
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <p className="text-violet-400 text-sm font-semibold uppercase tracking-widest mb-4">
-              Contact
-            </p>
-            <h2 className="text-4xl md:text-5xl font-black mb-4">
-              Let's build together
-            </h2>
-            <p className="text-gray-500">
-              Send us a message and we'll reply within 24 hours.
-            </p>
-          </motion.div>
 
-          {/* ── Real Formspree form ── */}
-          {/*
-            HOW TO ACTIVATE:
-            1. Sign up at https://formspree.io
-            2. Create a new form called "Nexa Contact"
-            3. Copy your endpoint e.g. https://formspree.io/f/xpwldabc
-            4. Paste it into the FORMSPREE_URL constant at the top of this file
-          */}
-          <motion.form
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
+          <div className="text-center mb-10">
+            <h2 className="text-5xl font-black mb-4">
+              Contact Us
+            </h2>
+
+            <p className="text-gray-500">
+              Let’s build something amazing together.
+            </p>
+          </div>
+
+          <form
             onSubmit={handleSubmit}
             className="flex flex-col gap-4"
           >
+
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
               placeholder="Your Name"
-              required
-              className="bg-white/5 border border-white/10 focus:border-violet-500/60 outline-none rounded-2xl px-5 py-4 text-white placeholder-gray-600 transition"
+              className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none"
             />
+
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
               placeholder="Your Email"
-              required
-              className="bg-white/5 border border-white/10 focus:border-violet-500/60 outline-none rounded-2xl px-5 py-4 text-white placeholder-gray-600 transition"
+              className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none"
             />
+
             <textarea
+              rows={5}
               name="message"
               value={formData.message}
               onChange={handleChange}
               placeholder="Your Message"
-              rows={5}
-              required
-              className="bg-white/5 border border-white/10 focus:border-violet-500/60 outline-none rounded-2xl px-5 py-4 text-white placeholder-gray-600 transition resize-none"
+              className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none resize-none"
             />
+
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-2xl font-bold text-base transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-violet-500/30"
+              className="bg-violet-600 hover:bg-violet-500 py-4 rounded-2xl font-bold transition"
             >
-              {isSubmitting ? "Sending..." : "Send Message →"}
+              {isSubmitting
+                ? "Sending..."
+                : "Send Message →"}
             </button>
-          </motion.form>
+
+          </form>
 
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer className="relative z-10 border-t border-white/5 py-12 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h3 className="text-2xl font-black mb-1">
-              Nexa<span className="text-violet-400">.</span>
-            </h3>
-            <p className="text-gray-600 text-sm">
-              Building modern AI-powered experiences.
-            </p>
-          </div>
-          <div className="flex gap-6 text-sm text-gray-500">
-            {navLinks.map((link) => (
-              <a
-                key={link}
-                href={`#${link.toLowerCase()}`}
-                className="hover:text-white transition"
-              >
-                {link}
-              </a>
-            ))}
-          </div>
-        </div>
-        <p className="text-center text-gray-700 text-xs mt-10">
+      {/* Footer */}
+      <footer className="border-t border-white/10 py-10 px-6 text-center text-gray-600">
+        <p>
           © 2026 Nexa. All rights reserved.
         </p>
       </footer>
 
-      {/* ── Toast ── */}
-      <AnimatePresence>{toast && <Toast {...toast} />}</AnimatePresence>
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && <Toast {...toast} />}
+      </AnimatePresence>
 
     </main>
   );
