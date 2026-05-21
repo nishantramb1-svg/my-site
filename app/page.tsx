@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
 import {
@@ -17,361 +17,600 @@ import {
   Menu,
   X,
   ArrowRight,
+  Check,
 } from "lucide-react";
 
 export default function Home() {
   const { isSignedIn } = useAuth();
-
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const features = [
     {
       icon: Zap,
-      title: "Fast Performance",
-      desc: "Optimized modern websites with blazing fast speed.",
+      title: "Lightning Performance",
+      desc: "Millisecond-fast load times with edge computing and intelligent caching.",
+      accent: "from-amber-400 to-orange-500",
     },
     {
       icon: Palette,
-      title: "Beautiful Design",
-      desc: "Premium UI with smooth animations and clean layouts.",
+      title: "Exquisite Design",
+      desc: "Hand-crafted interfaces with meticulous attention to every detail.",
+      accent: "from-rose-400 to-pink-500",
     },
     {
       icon: Cpu,
-      title: "AI Powered",
-      desc: "Build smarter using AI workflows and automation.",
+      title: "Intelligent Automation",
+      desc: "AI-powered workflows that learn and adapt to your needs.",
+      accent: "from-cyan-400 to-blue-500",
     },
   ];
 
-  return (
-    <main className="bg-black text-white min-h-screen overflow-x-hidden">
+  const pricingFeatures = [
+    "Up to 5 Projects",
+    "Community Support",
+    "Basic Analytics",
+    "Standard Performance",
+  ];
 
-      {/* Background */}
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute top-[-200px] left-[-100px] w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-200px] right-[-100px] w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[120px]" />
+  const proFeatures = [
+    "Unlimited Projects",
+    "Priority Support",
+    "Advanced Analytics",
+    "99.99% Uptime",
+    "Custom Domains",
+    "API Access",
+  ];
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.8, ease: "easeOut" },
+    },
+  };
+
+  return (
+    <main className="bg-slate-950 text-white min-h-screen overflow-x-hidden">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Cormorant+Garamond:wght@300;400;600;700&display=swap');
+        
+        :root {
+          --accent-primary: #7c3aed;
+          --accent-secondary: #06b6d4;
+          --accent-tertiary: #f97316;
+        }
+
+        body {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        }
+
+        .hero-text {
+          font-family: 'Cormorant Garamond', serif;
+          letter-spacing: -2px;
+        }
+
+        .glow-border {
+          position: relative;
+          border: 1px solid transparent;
+          background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(6, 182, 212, 0.1)) border-box;
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+        }
+
+        .gradient-text {
+          background: linear-gradient(135deg, #fbbf24 0%, #f97316 50%, #f43f5e 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .geometric-pattern {
+          background-image: 
+            linear-gradient(45deg, rgba(124, 58, 237, 0.05) 25%, transparent 25%),
+            linear-gradient(-45deg, rgba(124, 58, 237, 0.05) 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, rgba(124, 58, 237, 0.05) 75%),
+            linear-gradient(-45deg, transparent 75%, rgba(124, 58, 237, 0.05) 75%);
+          background-size: 40px 40px;
+          background-position: 0 0, 0 20px, 20px -20px, -20px 0px;
+        }
+
+        .mesh-gradient {
+          background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(6, 182, 212, 0.15) 50%, rgba(249, 115, 22, 0.15) 100%);
+          filter: blur(80px);
+        }
+
+        .card-shine {
+          position: relative;
+          overflow: hidden;
+        }
+
+        .card-shine::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+          transition: left 0.5s;
+        }
+
+        .card-shine:hover::before {
+          left: 100%;
+        }
+
+        .underline-animated {
+          position: relative;
+          display: inline-block;
+        }
+
+        .underline-animated::after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 0;
+          width: 0;
+          height: 2px;
+          background: linear-gradient(90deg, #7c3aed, #06b6d4);
+          transition: width 0.3s ease;
+        }
+
+        .underline-animated:hover::after {
+          width: 100%;
+        }
+
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+
+        .float-animation {
+          animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+          0% { background-position: -1000px 0; }
+          100% { background-position: 1000px 0; }
+        }
+
+        .shimmer-load {
+          background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 20%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0.1) 100%);
+          background-size: 1000px 100%;
+          animation: shimmer 2s infinite;
+        }
+      `}</style>
+
+      {/* Premium Background */}
+      <div className="fixed inset-0 -z-20">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] mesh-gradient rounded-full" />
+        <div className="absolute bottom-0 right-1/4 w-[700px] h-[700px] mesh-gradient rounded-full" style={{animationDelay: "2s"}} />
+        <div className="absolute top-1/2 right-0 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-3xl" />
       </div>
 
+      {/* Geometric Overlay */}
+      <div className="fixed inset-0 -z-10 geometric-pattern opacity-20" />
+
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-black/70 backdrop-blur-xl border-b border-white/10">
-
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-
-          <h1 className="text-2xl font-black">
-            Nexa<span className="text-purple-400">.</span>
-          </h1>
+      <nav className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-2xl border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+          <motion.h1
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-3xl font-bold tracking-tight"
+          >
+            <span className="font-light">nexa</span>
+            <span className="gradient-text font-bold">.</span>
+          </motion.h1>
 
           {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-8 text-gray-300">
-
-            <a href="#features" className="hover:text-white transition">
-              Features
-            </a>
-
-            <a href="#pricing" className="hover:text-white transition">
-              Pricing
-            </a>
-
-            <a href="#about" className="hover:text-white transition">
-              About
-            </a>
-
-            <a href="#contact" className="hover:text-white transition">
-              Contact
-            </a>
-
+          <div className="hidden md:flex items-center gap-10 text-sm">
+            {["Features", "Pricing", "About", "Contact"].map((item) => (
+              <a
+                key={item}
+                href={`#${item.toLowerCase()}`}
+                className="underline-animated text-gray-400 hover:text-white transition"
+              >
+                {item}
+              </a>
+            ))}
           </div>
 
           {/* Auth */}
-          <div className="hidden md:flex items-center gap-3">
-
+          <div className="hidden md:flex items-center gap-4">
             {isSignedIn ? (
               <>
                 <a
                   href="/dashboard"
-                  className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition"
+                  className="text-sm px-5 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 transition"
                 >
                   Dashboard
                 </a>
-
                 <UserButton />
               </>
             ) : (
               <>
                 <SignInButton mode="modal">
-                  <button className="text-gray-300 hover:text-white transition">
-                    Login
+                  <button className="text-sm text-gray-400 hover:text-white transition">
+                    Sign In
                   </button>
                 </SignInButton>
-
                 <SignUpButton mode="modal">
-                  <button className="bg-purple-600 hover:bg-purple-500 px-5 py-2 rounded-xl font-semibold transition">
+                  <button className="text-sm px-5 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-500 hover:shadow-lg hover:shadow-purple-600/50 font-semibold transition">
                     Get Started
                   </button>
                 </SignUpButton>
               </>
             )}
-
           </div>
 
-          {/* Mobile Button */}
+          {/* Mobile Menu */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden"
+            className="md:hidden text-gray-400"
           >
-            {menuOpen ? <X /> : <Menu />}
+            {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
-
         </div>
 
         {/* Mobile Menu */}
         {menuOpen && (
-          <div className="md:hidden border-t border-white/10 bg-black px-6 py-4 flex flex-col gap-4">
-
-            <a href="#features">Features</a>
-            <a href="#pricing">Pricing</a>
-            <a href="#about">About</a>
-            <a href="#contact">Contact</a>
-
-          </div>
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden border-t border-white/10 bg-slate-900 px-6 py-6 flex flex-col gap-6"
+          >
+            {["Features", "Pricing", "About", "Contact"].map((item) => (
+              <a key={item} href={`#${item.toLowerCase()}`}>
+                {item}
+              </a>
+            ))}
+          </motion.div>
         )}
-
       </nav>
 
-      {/* Hero */}
-      <section className="min-h-screen flex flex-col items-center justify-center text-center px-6">
-
-        <motion.h1
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          className="text-6xl md:text-8xl font-black max-w-5xl leading-tight mb-6"
+      {/* Hero Section */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+          className="max-w-5xl mx-auto"
         >
-          Build Modern
-          <br />
-          <span className="text-purple-400">
-            AI Websites
-          </span>
-        </motion.h1>
+          <motion.div variants={itemVariants} className="mb-6">
+            <span className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 border border-purple-500/30 text-sm font-medium">
+              ✨ Premium AI Platform
+            </span>
+          </motion.div>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-gray-400 text-lg max-w-2xl mb-10"
-        >
-          Create premium AI-powered websites using Next.js,
-          Tailwind CSS, and Framer Motion.
-        </motion.p>
+          <motion.h1
+            variants={itemVariants}
+            className="hero-text text-7xl md:text-8xl lg:text-9xl font-light leading-none mb-8"
+          >
+            Build
+            <br />
+            <span className="gradient-text font-bold">Extraordinary</span>
+          </motion.h1>
 
-        <motion.a
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          href="#pricing"
-          className="bg-purple-600 hover:bg-purple-500 px-8 py-4 rounded-full font-bold flex items-center gap-2 transition"
-        >
-          Start Building
-          <ArrowRight size={18} />
-        </motion.a>
+          <motion.p
+            variants={itemVariants}
+            className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed font-light"
+          >
+            Craft intelligent, beautifully designed experiences with our next-generation platform built on modern technologies.
+          </motion.p>
 
+          <motion.div
+            variants={itemVariants}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+          >
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
+              className="px-8 py-4 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-500 font-semibold flex items-center gap-3 hover:shadow-2xl hover:shadow-purple-600/50 transition"
+            >
+              Start Building
+              <ArrowRight size={20} />
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
+              className="px-8 py-4 rounded-lg border border-white/20 text-white hover:bg-white/10 transition font-semibold"
+            >
+              View Demo
+            </motion.button>
+          </motion.div>
+
+          {/* Stats */}
+          <motion.div
+            variants={itemVariants}
+            className="mt-16 flex justify-center gap-12 text-center"
+          >
+            {[
+              { value: "10K+", label: "Active Users" },
+              { value: "99.9%", label: "Uptime" },
+              { value: "2ms", label: "Latency" },
+            ].map((stat, i) => (
+              <div key={i}>
+                <div className="text-2xl font-bold text-white">{stat.value}</div>
+                <div className="text-sm text-gray-500">{stat.label}</div>
+              </div>
+            ))}
+          </motion.div>
+        </motion.div>
       </section>
 
-      {/* Features */}
+      {/* Features Section */}
       <section
         id="features"
-        className="px-6 py-24 border-t border-white/10"
+        className="relative px-6 py-24 border-t border-white/5"
       >
-
         <div className="max-w-6xl mx-auto">
-
-          <div className="text-center mb-16">
-
-            <h2 className="text-5xl font-black mb-4">
-              Features
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-20"
+          >
+            <h2 className="hero-text text-5xl md:text-6xl font-light mb-6">
+              Everything You Need
             </h2>
-
-            <p className="text-gray-500">
-              Everything you need to build fast.
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+              Comprehensive tools designed for creators and developers
             </p>
+          </motion.div>
 
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={containerVariants}
+            className="grid md:grid-cols-3 gap-8"
+          >
             {features.map((feature, index) => {
               const Icon = feature.icon;
-
               return (
                 <motion.div
                   key={index}
-                  whileHover={{ y: -8 }}
-                  className="bg-white/5 border border-white/10 rounded-3xl p-8"
+                  variants={itemVariants}
+                  whileHover={{ y: -10, transition: { duration: 0.3 } }}
+                  className="card-shine group relative glow-border rounded-2xl p-8 backdrop-blur-sm"
                 >
+                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${feature.accent} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                  
+                  <div className="relative">
+                    <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${feature.accent} bg-opacity-20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                      <Icon className={`text-2xl bg-gradient-to-br ${feature.accent} bg-clip-text text-transparent`} size={32} />
+                    </div>
 
-                  <div className="w-14 h-14 rounded-2xl bg-purple-500/20 flex items-center justify-center mb-6">
-                    <Icon className="text-purple-400" />
+                    <h3 className="text-2xl font-semibold mb-4 group-hover:text-white transition">
+                      {feature.title}
+                    </h3>
+
+                    <p className="text-gray-400 leading-relaxed">
+                      {feature.desc}
+                    </p>
                   </div>
-
-                  <h3 className="text-2xl font-bold mb-4">
-                    {feature.title}
-                  </h3>
-
-                  <p className="text-gray-400">
-                    {feature.desc}
-                  </p>
-
                 </motion.div>
               );
             })}
-
-          </div>
-
+          </motion.div>
         </div>
-
       </section>
 
-      {/* Pricing */}
+      {/* Pricing Section */}
       <section
         id="pricing"
-        className="px-6 py-24 border-t border-white/10"
+        className="relative px-6 py-24 border-t border-white/5"
       >
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="hero-text text-5xl md:text-6xl font-light mb-6">
+              Simple Pricing
+            </h2>
+            <p className="text-gray-400 text-lg">
+              Start free, upgrade when you need more
+            </p>
+          </motion.div>
 
-        <div className="max-w-5xl mx-auto text-center">
-
-          <h2 className="text-5xl font-black mb-4">
-            Pricing
-          </h2>
-
-          <p className="text-gray-500 mb-16">
-            Simple pricing for creators and startups.
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-8">
-
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={containerVariants}
+            className="grid md:grid-cols-2 gap-8"
+          >
             {/* Starter */}
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-10">
+            <motion.div
+              variants={itemVariants}
+              className="card-shine glow-border rounded-2xl p-10 backdrop-blur-sm"
+            >
+              <h3 className="text-3xl font-semibold mb-3">Starter</h3>
+              <p className="text-gray-500 text-sm mb-8">Perfect to get started</p>
 
-              <h3 className="text-3xl font-bold mb-4">
-                Starter
-              </h3>
+              <div className="mb-8">
+                <span className="text-5xl font-bold">$19</span>
+                <span className="text-gray-500 ml-2">/month</span>
+              </div>
 
-              <p className="text-6xl font-black mb-6">
-                $19
-              </p>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full py-4 rounded-lg border border-white/20 font-semibold hover:bg-white/10 transition mb-8"
+              >
+                Get Started Free
+              </motion.button>
 
-              <button className="w-full bg-white text-black py-4 rounded-2xl font-bold">
-                Start Free
-              </button>
-
-            </div>
+              <div className="space-y-4">
+                {pricingFeatures.map((feature, i) => (
+                  <div key={i} className="flex items-center gap-3 text-gray-300">
+                    <Check size={18} className="text-cyan-500" />
+                    {feature}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
 
             {/* Pro */}
-            <div className="bg-purple-600/10 border border-purple-500/30 rounded-3xl p-10">
+            <motion.div
+              variants={itemVariants}
+              whileHover={{ y: -10 }}
+              className="card-shine glow-border rounded-2xl p-10 backdrop-blur-sm border-purple-500/50 bg-gradient-to-br from-purple-500/10 to-cyan-500/10"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-3xl font-semibold">Pro</h3>
+                <span className="inline-block px-3 py-1 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 text-xs font-bold">
+                  POPULAR
+                </span>
+              </div>
+              <p className="text-gray-500 text-sm mb-8">For professionals</p>
 
-              <h3 className="text-3xl font-bold mb-4">
-                Pro
-              </h3>
+              <div className="mb-8">
+                <span className="text-5xl font-bold">$49</span>
+                <span className="text-gray-500 ml-2">/month</span>
+              </div>
 
-              <p className="text-6xl font-black mb-6">
-                $49
-              </p>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full py-4 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-500 font-semibold hover:shadow-lg hover:shadow-purple-600/50 transition mb-8"
+              >
+                Upgrade to Pro
+              </motion.button>
 
-              <button className="w-full bg-purple-600 py-4 rounded-2xl font-bold">
-                Go Pro
-              </button>
-
-            </div>
-
-          </div>
-
+              <div className="space-y-4">
+                {proFeatures.map((feature, i) => (
+                  <div key={i} className="flex items-center gap-3 text-gray-300">
+                    <Check size={18} className="text-purple-400" />
+                    {feature}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
         </div>
-
       </section>
 
-      {/* About */}
+      {/* About Section */}
       <section
         id="about"
-        className="px-6 py-24 border-t border-white/10 text-center"
+        className="relative px-6 py-24 border-t border-white/5"
       >
-
-        <div className="max-w-3xl mx-auto">
-
-          <h2 className="text-5xl font-black mb-6">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.h2
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="hero-text text-5xl md:text-6xl font-light mb-8"
+          >
             About Nexa
-          </h2>
+          </motion.h2>
 
-          <p className="text-gray-400 text-lg leading-relaxed">
-            Nexa helps developers and creators build
-            modern AI-powered products faster using
-            scalable workflows and premium UI systems.
-          </p>
-
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            viewport={{ once: true }}
+            className="text-gray-400 text-lg leading-relaxed"
+          >
+            Nexa empowers creators and developers to build next-generation AI-powered products with unprecedented speed and elegance. Our platform combines cutting-edge technology with thoughtful design, enabling you to focus on what matters most—creating exceptional experiences.
+          </motion.p>
         </div>
-
       </section>
 
-      {/* Contact */}
+      {/* Contact Section */}
       <section
         id="contact"
-        className="px-6 py-24 border-t border-white/10"
+        className="relative px-6 py-24 border-t border-white/5"
       >
-
         <div className="max-w-xl mx-auto">
-
-          <div className="text-center mb-10">
-
-            <h2 className="text-5xl font-black mb-4">
-              Contact Us
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="hero-text text-5xl md:text-6xl font-light mb-6">
+              Get in Touch
             </h2>
-
-            <p className="text-gray-500">
-              Let’s build something amazing together.
+            <p className="text-gray-400">
+              Let's collaborate and build something remarkable
             </p>
+          </motion.div>
 
-          </div>
-
-          <form className="flex flex-col gap-4">
-
+          <motion.form
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="space-y-4"
+          >
             <input
               type="text"
               placeholder="Your Name"
-              className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none"
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-6 py-4 outline-none focus:border-purple-500/50 focus:bg-white/10 transition text-white placeholder-gray-600"
             />
 
             <input
               type="email"
               placeholder="Your Email"
-              className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none"
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-6 py-4 outline-none focus:border-purple-500/50 focus:bg-white/10 transition text-white placeholder-gray-600"
             />
 
             <textarea
               rows={5}
               placeholder="Your Message"
-              className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none resize-none"
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-6 py-4 outline-none focus:border-purple-500/50 focus:bg-white/10 transition text-white placeholder-gray-600 resize-none"
             />
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               type="submit"
-              className="bg-purple-600 hover:bg-purple-500 py-4 rounded-2xl font-bold transition"
+              className="w-full py-4 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-500 font-semibold hover:shadow-lg hover:shadow-purple-600/50 transition"
             >
               Send Message
-            </button>
-
-          </form>
-
+            </motion.button>
+          </motion.form>
         </div>
-
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 py-10 px-6 text-center text-gray-600">
-
-        <p>
-          © 2026 Nexa. All rights reserved.
-        </p>
-
+      <footer className="border-t border-white/5 py-12 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between text-gray-500 text-sm">
+          <p>© 2026 Nexa. All rights reserved.</p>
+          <div className="flex gap-6 mt-6 md:mt-0">
+            <a href="#" className="hover:text-white transition underline-animated">Privacy</a>
+            <a href="#" className="hover:text-white transition underline-animated">Terms</a>
+            <a href="#" className="hover:text-white transition underline-animated">Twitter</a>
+          </div>
+        </div>
       </footer>
-
     </main>
   );
 }
