@@ -1,15 +1,15 @@
 "use client";
-
+ 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-
+ 
 import {
   SignInButton,
   SignUpButton,
   UserButton,
   useAuth,
 } from "@clerk/nextjs";
-
+ 
 import {
   Zap,
   Palette,
@@ -19,18 +19,18 @@ import {
   ArrowRight,
   Check,
 } from "lucide-react";
-
+ 
 export default function Home() {
   const { isSignedIn } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
-
+ 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
+ 
   const features = [
     {
       icon: Zap,
@@ -51,14 +51,14 @@ export default function Home() {
       accent: "from-cyan-400 to-blue-500",
     },
   ];
-
+ 
   const pricingFeatures = [
     "Up to 5 Projects",
     "Community Support",
     "Basic Analytics",
     "Standard Performance",
   ];
-
+ 
   const proFeatures = [
     "Unlimited Projects",
     "Priority Support",
@@ -67,7 +67,7 @@ export default function Home() {
     "Custom Domains",
     "API Access",
   ];
-
+ 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -78,16 +78,16 @@ export default function Home() {
       },
     },
   };
-
+ 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.8, ease: "easeOut" },
+      transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] },
     },
   };
-
+ 
   return (
     <main className="bg-slate-950 text-white min-h-screen overflow-x-hidden">
       <style>{`
@@ -98,17 +98,17 @@ export default function Home() {
           --accent-secondary: #06b6d4;
           --accent-tertiary: #f97316;
         }
-
+ 
         body {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
           background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
         }
-
+ 
         .hero-text {
           font-family: 'Cormorant Garamond', serif;
           letter-spacing: -2px;
         }
-
+ 
         .glow-border {
           position: relative;
           border: 1px solid transparent;
@@ -117,14 +117,14 @@ export default function Home() {
           -webkit-mask-composite: xor;
           mask-composite: exclude;
         }
-
+ 
         .gradient-text {
           background: linear-gradient(135deg, #fbbf24 0%, #f97316 50%, #f43f5e 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
-
+ 
         .geometric-pattern {
           background-image: 
             linear-gradient(45deg, rgba(124, 58, 237, 0.05) 25%, transparent 25%),
@@ -134,17 +134,17 @@ export default function Home() {
           background-size: 40px 40px;
           background-position: 0 0, 0 20px, 20px -20px, -20px 0px;
         }
-
+ 
         .mesh-gradient {
           background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(6, 182, 212, 0.15) 50%, rgba(249, 115, 22, 0.15) 100%);
           filter: blur(80px);
         }
-
+ 
         .card-shine {
           position: relative;
           overflow: hidden;
         }
-
+ 
         .card-shine::before {
           content: '';
           position: absolute;
@@ -155,16 +155,16 @@ export default function Home() {
           background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
           transition: left 0.5s;
         }
-
+ 
         .card-shine:hover::before {
           left: 100%;
         }
-
+ 
         .underline-animated {
           position: relative;
           display: inline-block;
         }
-
+ 
         .underline-animated::after {
           content: '';
           position: absolute;
@@ -175,42 +175,42 @@ export default function Home() {
           background: linear-gradient(90deg, #7c3aed, #06b6d4);
           transition: width 0.3s ease;
         }
-
+ 
         .underline-animated:hover::after {
           width: 100%;
         }
-
+ 
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-20px); }
         }
-
+ 
         .float-animation {
           animation: float 6s ease-in-out infinite;
         }
-
+ 
         @keyframes shimmer {
           0% { background-position: -1000px 0; }
           100% { background-position: 1000px 0; }
         }
-
+ 
         .shimmer-load {
           background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 20%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0.1) 100%);
           background-size: 1000px 100%;
           animation: shimmer 2s infinite;
         }
       `}</style>
-
+ 
       {/* Premium Background */}
       <div className="fixed inset-0 -z-20">
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] mesh-gradient rounded-full" />
         <div className="absolute bottom-0 right-1/4 w-[700px] h-[700px] mesh-gradient rounded-full" style={{animationDelay: "2s"}} />
         <div className="absolute top-1/2 right-0 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-3xl" />
       </div>
-
+ 
       {/* Geometric Overlay */}
       <div className="fixed inset-0 -z-10 geometric-pattern opacity-20" />
-
+ 
       {/* Navbar */}
       <nav className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-2xl border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
@@ -222,7 +222,7 @@ export default function Home() {
             <span className="font-light">nexa</span>
             <span className="gradient-text font-bold">.</span>
           </motion.h1>
-
+ 
           {/* Desktop Links */}
           <div className="hidden md:flex items-center gap-10 text-sm">
             {["Features", "Pricing", "About", "Contact"].map((item) => (
@@ -235,7 +235,7 @@ export default function Home() {
               </a>
             ))}
           </div>
-
+ 
           {/* Auth */}
           <div className="hidden md:flex items-center gap-4">
             {isSignedIn ? (
@@ -263,7 +263,7 @@ export default function Home() {
               </>
             )}
           </div>
-
+ 
           {/* Mobile Menu */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
@@ -272,7 +272,7 @@ export default function Home() {
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
-
+ 
         {/* Mobile Menu */}
         {menuOpen && (
           <motion.div
@@ -289,7 +289,7 @@ export default function Home() {
           </motion.div>
         )}
       </nav>
-
+ 
       {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 py-20">
         <motion.div
@@ -303,7 +303,7 @@ export default function Home() {
               ✨ Premium AI Platform
             </span>
           </motion.div>
-
+ 
           <motion.h1
             variants={itemVariants}
             className="hero-text text-7xl md:text-8xl lg:text-9xl font-light leading-none mb-8"
@@ -312,14 +312,14 @@ export default function Home() {
             <br />
             <span className="gradient-text font-bold">Extraordinary</span>
           </motion.h1>
-
+ 
           <motion.p
             variants={itemVariants}
             className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed font-light"
           >
             Craft intelligent, beautifully designed experiences with our next-generation platform built on modern technologies.
           </motion.p>
-
+ 
           <motion.div
             variants={itemVariants}
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
@@ -332,7 +332,7 @@ export default function Home() {
               Start Building
               <ArrowRight size={20} />
             </motion.button>
-
+ 
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
@@ -341,7 +341,7 @@ export default function Home() {
               View Demo
             </motion.button>
           </motion.div>
-
+ 
           {/* Stats */}
           <motion.div
             variants={itemVariants}
@@ -360,7 +360,7 @@ export default function Home() {
           </motion.div>
         </motion.div>
       </section>
-
+ 
       {/* Features Section */}
       <section
         id="features"
@@ -380,7 +380,7 @@ export default function Home() {
               Comprehensive tools designed for creators and developers
             </p>
           </motion.div>
-
+ 
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -403,11 +403,11 @@ export default function Home() {
                     <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${feature.accent} bg-opacity-20 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
                       <Icon className={`text-2xl bg-gradient-to-br ${feature.accent} bg-clip-text text-transparent`} size={32} />
                     </div>
-
+ 
                     <h3 className="text-2xl font-semibold mb-4 group-hover:text-white transition">
                       {feature.title}
                     </h3>
-
+ 
                     <p className="text-gray-400 leading-relaxed">
                       {feature.desc}
                     </p>
@@ -418,7 +418,7 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
-
+ 
       {/* Pricing Section */}
       <section
         id="pricing"
@@ -438,7 +438,7 @@ export default function Home() {
               Start free, upgrade when you need more
             </p>
           </motion.div>
-
+ 
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -453,12 +453,12 @@ export default function Home() {
             >
               <h3 className="text-3xl font-semibold mb-3">Starter</h3>
               <p className="text-gray-500 text-sm mb-8">Perfect to get started</p>
-
+ 
               <div className="mb-8">
                 <span className="text-5xl font-bold">$19</span>
                 <span className="text-gray-500 ml-2">/month</span>
               </div>
-
+ 
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
@@ -466,7 +466,7 @@ export default function Home() {
               >
                 Get Started Free
               </motion.button>
-
+ 
               <div className="space-y-4">
                 {pricingFeatures.map((feature, i) => (
                   <div key={i} className="flex items-center gap-3 text-gray-300">
@@ -476,7 +476,7 @@ export default function Home() {
                 ))}
               </div>
             </motion.div>
-
+ 
             {/* Pro */}
             <motion.div
               variants={itemVariants}
@@ -490,12 +490,12 @@ export default function Home() {
                 </span>
               </div>
               <p className="text-gray-500 text-sm mb-8">For professionals</p>
-
+ 
               <div className="mb-8">
                 <span className="text-5xl font-bold">$49</span>
                 <span className="text-gray-500 ml-2">/month</span>
               </div>
-
+ 
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
@@ -503,7 +503,7 @@ export default function Home() {
               >
                 Upgrade to Pro
               </motion.button>
-
+ 
               <div className="space-y-4">
                 {proFeatures.map((feature, i) => (
                   <div key={i} className="flex items-center gap-3 text-gray-300">
@@ -516,7 +516,7 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
-
+ 
       {/* About Section */}
       <section
         id="about"
@@ -531,7 +531,7 @@ export default function Home() {
           >
             About Nexa
           </motion.h2>
-
+ 
           <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -543,7 +543,7 @@ export default function Home() {
           </motion.p>
         </div>
       </section>
-
+ 
       {/* Contact Section */}
       <section
         id="contact"
@@ -563,7 +563,7 @@ export default function Home() {
               Let's collaborate and build something remarkable
             </p>
           </motion.div>
-
+ 
           <motion.form
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -575,19 +575,19 @@ export default function Home() {
               placeholder="Your Name"
               className="w-full bg-white/5 border border-white/10 rounded-lg px-6 py-4 outline-none focus:border-purple-500/50 focus:bg-white/10 transition text-white placeholder-gray-600"
             />
-
+ 
             <input
               type="email"
               placeholder="Your Email"
               className="w-full bg-white/5 border border-white/10 rounded-lg px-6 py-4 outline-none focus:border-purple-500/50 focus:bg-white/10 transition text-white placeholder-gray-600"
             />
-
+ 
             <textarea
               rows={5}
               placeholder="Your Message"
               className="w-full bg-white/5 border border-white/10 rounded-lg px-6 py-4 outline-none focus:border-purple-500/50 focus:bg-white/10 transition text-white placeholder-gray-600 resize-none"
             />
-
+ 
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -599,7 +599,7 @@ export default function Home() {
           </motion.form>
         </div>
       </section>
-
+ 
       {/* Footer */}
       <footer className="border-t border-white/5 py-12 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between text-gray-500 text-sm">
