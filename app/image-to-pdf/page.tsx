@@ -9,7 +9,6 @@ import {
   Download,
   Loader2,
   GripVertical,
-  Eye,
 } from 'lucide-react';
 
 import toast, { Toaster } from 'react-hot-toast';

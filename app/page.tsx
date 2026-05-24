@@ -209,7 +209,7 @@ export default function Dashboard() {
               }`}
             >
               <item.icon size={20} />
-              <span className="text-sm font-500">{item.label}</span>
+              <span className="text-sm font-medium">{item.label}</span>
             </motion.button>
           ))}
         </nav>
@@ -291,7 +291,7 @@ export default function Dashboard() {
               </button>
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="hidden md:p-2 hover:bg-white/10 rounded-lg transition"
+                className="hidden md:flex items-center p-2 hover:bg-white/10 rounded-lg transition"
               >
                 <Menu size={20} />
               </button>
@@ -487,7 +487,7 @@ export default function Dashboard() {
                   placeholder="Ask AI..."
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                   className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-purple-500/50 placeholder-gray-600 transition"
                 />
                 <motion.button
