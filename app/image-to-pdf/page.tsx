@@ -1,18 +1,12 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
-import {
-  Upload,
-  X,
-  Download,
-  Loader2,
-  GripVertical,
-  Eye,
-} from 'lucide-react';
-
+import { Upload, X, Download, Loader2, GripVertical, ArrowLeft, Image as ImageIcon } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
+import Navbar from '../components/Navbar';
 
 interface UploadedImage {
   id: string;
@@ -23,271 +17,226 @@ interface UploadedImage {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+function fmt(size: number) {
+  return size < 1024 * 1024
+    ? `${(size / 1024).toFixed(1)} KB`
+    : `${(size / 1024 / 1024).toFixed(1)} MB`;
+}
+
 export default function ImageToPDFPage() {
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [isConverting, setIsConverting] = useState(false);
-  const [selectedImagePreview, setSelectedImagePreview] =
-    useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
 
-  const validateFile = (file: File) => {
-    if (file.size > MAX_FILE_SIZE) {
-      toast.error('File exceeds 10MB');
-      return false;
-    }
-
-    return true;
-  };
-
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const validFiles = acceptedFiles.filter(validateFile);
-
-    const mapped = validFiles.map((file) => ({
+  const onDrop = useCallback((accepted: File[]) => {
+    const valid = accepted.filter((f) => {
+      if (f.size > MAX_FILE_SIZE) { toast.error(`${f.name} exceeds 10 MB`); return false; }
+      return true;
+    });
+    const mapped = valid.map((file) => ({
       id: crypto.randomUUID(),
       file,
       preview: URL.createObjectURL(file),
       size: file.size,
     }));
-
     setImages((prev) => [...prev, ...mapped]);
-
-    if (mapped.length > 0) {
-      toast.success(`${mapped.length} image(s) added`);
-    }
+    if (mapped.length > 0) toast.success(`${mapped.length} image(s) added`);
   }, []);
 
-  const {
-    getRootProps,
-    getInputProps,
-    isDragActive,
-  } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.webp'],
-    },
+    accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] },
   });
 
-  const removeImage = (id: string) => {
-    setImages((prev) => prev.filter((img) => img.id !== id));
-  };
-
-  const totalSize = useMemo(() => {
-    return images.reduce((acc, img) => acc + img.size, 0);
-  }, [images]);
-
-  const formattedSize = (size: number) => {
-    if (size < 1024 * 1024) {
-      return `${(size / 1024).toFixed(1)} KB`;
-    }
-
-    return `${(size / 1024 / 1024).toFixed(1)} MB`;
-  };
+  const removeImage = (id: string) => setImages((prev) => prev.filter((img) => img.id !== id));
+  const totalSize = useMemo(() => images.reduce((acc, img) => acc + img.size, 0), [images]);
 
   const downloadPDF = async () => {
-    if (images.length === 0) {
-      toast.error('Add images first');
-      return;
-    }
-
+    if (images.length === 0) { toast.error('Add images first'); return; }
     setIsConverting(true);
-
     try {
       const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-      const pdf = new jsPDF();
+      // A4 usable area with 10mm margins
+      const PAGE_W = 190; // 210 - 2×10
+      const PAGE_H = 277; // 297 - 2×10
 
       for (let i = 0; i < images.length; i++) {
-        const image = images[i];
-
         const data = await new Promise<string>((resolve) => {
           const reader = new FileReader();
-
-          reader.onload = () => {
-            resolve(reader.result as string);
-          };
-
-          reader.readAsDataURL(image.file);
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(images[i].file);
         });
 
-        if (i > 0) {
-          pdf.addPage();
+        // Measure the real pixel dimensions of the image
+        const { naturalW, naturalH } = await new Promise<{ naturalW: number; naturalH: number }>((resolve) => {
+          const img = new window.Image();
+          img.onload = () => resolve({ naturalW: img.naturalWidth, naturalH: img.naturalHeight });
+          img.src = data;
+        });
+
+        // Scale proportionally to fit within the page area
+        const imgAspect = naturalW / naturalH;
+        const pageAspect = PAGE_W / PAGE_H;
+
+        let drawW: number, drawH: number;
+        if (imgAspect > pageAspect) {
+          // Wider than page → constrain by width
+          drawW = PAGE_W;
+          drawH = PAGE_W / imgAspect;
+        } else {
+          // Taller than page → constrain by height
+          drawH = PAGE_H;
+          drawW = PAGE_H * imgAspect;
         }
 
-        pdf.addImage(data, 'JPEG', 10, 10, 190, 250);
+        // Center the image on the page
+        const x = 10 + (PAGE_W - drawW) / 2;
+        const y = 10 + (PAGE_H - drawH) / 2;
+
+        if (i > 0) pdf.addPage();
+
+        const imgFmt = images[i].file.type === 'image/png' ? 'PNG' : 'JPEG';
+        pdf.addImage(data, imgFmt, x, y, drawW, drawH);
       }
 
       pdf.save('images.pdf');
-
       toast.success('PDF downloaded!');
-    } catch (error) {
+    } catch (e) {
       toast.error('Failed to generate PDF');
-      console.error(error);
+      console.error(e);
     } finally {
       setIsConverting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      <Toaster position="top-right" />
+    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
+      <Toaster position="top-right" toastOptions={{
+        style: { background: 'var(--bg-card)', color: 'var(--text)', border: '1px solid var(--border)' }
+      }} />
+      <Navbar />
 
-      <div className="max-w-5xl mx-auto">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+
+        {/* Back */}
+        <Link href="/" className="inline-flex items-center gap-2 text-sm mb-8 transition"
+          style={{ color: 'var(--muted)' }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--muted)'}>
+          <ArrowLeft size={16} /> Back to all tools
+        </Link>
 
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-black mb-4">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6"
+            style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)' }}>
+            <ImageIcon size={28} style={{ color: '#10b981' }} />
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-black mb-3" style={{ fontFamily: 'Syne, sans-serif' }}>
             Image to PDF
           </h1>
-
-          <p className="text-gray-400 text-lg">
-            Convert images into beautiful PDFs instantly.
+          <p style={{ color: 'var(--muted)' }}>
+            Convert JPG, PNG, or WEBP images into a PDF. Drag to reorder.
           </p>
         </div>
 
-        {/* Upload */}
-        <div
-          {...getRootProps()}
-          className={`border-2 border-dashed rounded-3xl p-14 text-center transition cursor-pointer ${
-            isDragActive
-              ? 'border-purple-500 bg-purple-500/10'
-              : 'border-white/10 hover:border-white/20 bg-white/5'
-          }`}
-        >
+        {/* Dropzone */}
+        <div {...getRootProps()} className="card p-12 text-center cursor-pointer transition-all mb-6"
+          style={{
+            borderStyle: 'dashed',
+            borderColor: isDragActive ? '#10b981' : 'var(--border)',
+            background: isDragActive ? 'rgba(16,185,129,0.06)' : 'var(--bg-card)',
+          }}>
           <input {...getInputProps()} />
-
-          <motion.div
-            animate={{ scale: isDragActive ? 1.05 : 1 }}
-          >
-            <Upload className="mx-auto w-14 h-14 text-purple-400 mb-5" />
-
-            <h2 className="text-2xl font-bold mb-2">
-              Drag & Drop Images
-            </h2>
-
-            <p className="text-gray-400">
-              or click to browse files
+          <motion.div animate={{ scale: isDragActive ? 1.04 : 1 }} transition={{ duration: 0.2 }}>
+            <Upload size={40} className="mx-auto mb-4" style={{ color: '#10b981' }} />
+            <p className="font-semibold text-lg mb-1">
+              {isDragActive ? 'Drop images here…' : 'Drag & drop images'}
+            </p>
+            <p className="text-sm" style={{ color: 'var(--muted)' }}>
+              or click to browse · PNG, JPG, WEBP · max 10 MB each
             </p>
           </motion.div>
         </div>
 
-        {/* Images */}
-        {images.length > 0 && (
-          <div className="mt-10">
+        {/* Image list */}
+        <AnimatePresence>
+          {images.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 16 }}>
 
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">
-                Images ({images.length})
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <p className="font-semibold">{images.length} image{images.length > 1 ? 's' : ''}</p>
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>{fmt(totalSize)} total</p>
+              </div>
 
-              <p className="text-gray-400">
-                {formattedSize(totalSize)}
-              </p>
-            </div>
+              <Reorder.Group axis="y" values={images} onReorder={setImages} className="space-y-3 mb-6">
+                {images.map((img) => (
+                  <Reorder.Item key={img.id} value={img}>
+                    <motion.div layout
+                      className="card p-4 flex items-center gap-4"
+                      style={{ cursor: 'grab' }}>
+                      <GripVertical size={18} style={{ color: 'var(--muted-2)', flexShrink: 0 }} />
 
-            <Reorder.Group
-              axis="y"
-              values={images}
-              onReorder={setImages}
-              className="space-y-4"
-            >
-              <AnimatePresence>
-                {images.map((image, index) => (
-                  <Reorder.Item
-                    key={image.id}
-                    value={image}
-                  >
-                    <motion.div
-                      layout
-                      className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4"
-                    >
-
-                      <button className="text-gray-500">
-                        <GripVertical />
-                      </button>
-
-                      <div
-                        className="w-20 h-20 rounded-xl overflow-hidden cursor-pointer"
-                        onClick={() =>
-                          setSelectedImagePreview(image.preview)
-                        }
-                      >
-                        <img
-                          src={image.preview}
-                          alt=""
-                          className="w-full h-full object-cover"
-                        />
+                      {/* Thumbnail */}
+                      <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 cursor-pointer"
+                        onClick={() => setPreview(img.preview)}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={img.preview} alt={img.file.name} className="w-full h-full object-cover" />
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="truncate font-medium">
-                          {image.file.name}
-                        </p>
-
-                        <p className="text-sm text-gray-400">
-                          {formattedSize(image.size)}
-                        </p>
+                        <p className="font-medium truncate text-sm">{img.file.name}</p>
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>{fmt(img.size)}</p>
                       </div>
 
-                      <button
-                        onClick={() => removeImage(image.id)}
-                        className="p-2 rounded-lg hover:bg-red-500/20 text-red-400"
-                      >
-                        <X />
+                      <button onClick={() => removeImage(img.id)}
+                        className="p-2 rounded-lg transition shrink-0"
+                        style={{ color: '#f87171' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.1)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                        <X size={16} />
                       </button>
-
                     </motion.div>
                   </Reorder.Item>
                 ))}
-              </AnimatePresence>
-            </Reorder.Group>
+              </Reorder.Group>
 
-            {/* Download */}
-            <button
-              onClick={downloadPDF}
-              disabled={isConverting}
-              className="mt-8 w-full bg-purple-600 hover:bg-purple-500 transition rounded-2xl py-4 font-bold flex items-center justify-center gap-3"
-            >
-              {isConverting ? (
-                <>
-                  <Loader2 className="animate-spin" />
-                  Generating PDF...
-                </>
-              ) : (
-                <>
-                  <Download />
-                  Download PDF
-                </>
-              )}
-            </button>
-          </div>
-        )}
-
-        {/* Preview Modal */}
-        <AnimatePresence>
-          {selectedImagePreview && (
-            <motion.div
-              className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedImagePreview(null)}
-            >
-              <motion.div
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.9 }}
-                className="max-w-3xl max-h-[85vh]"
-              >
-                <img
-                  src={selectedImagePreview}
-                  alt=""
-                  className="rounded-2xl max-h-[85vh]"
-                />
-              </motion.div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={downloadPDF}
+                disabled={isConverting}
+                className="btn-primary w-full flex items-center justify-center gap-3 py-4 text-base">
+                {isConverting
+                  ? <><Loader2 size={18} className="animate-spin" /> Generating PDF…</>
+                  : <><Download size={18} /> Download PDF</>}
+              </motion.button>
             </motion.div>
           )}
         </AnimatePresence>
+      </main>
 
-      </div>
+      {/* Preview modal */}
+      <AnimatePresence>
+        {preview && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setPreview(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.85)' }}>
+            <motion.img
+              initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
+              src={preview} alt="preview"
+              className="rounded-2xl max-h-[85vh] max-w-full"
+              onClick={e => e.stopPropagation()} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

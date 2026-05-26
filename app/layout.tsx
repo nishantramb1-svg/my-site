@@ -16,9 +16,9 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Nexa — Build Remarkable Products",
+  title: "PDFTools — All the PDF tools you need",
   description:
-    "The modern platform for shipping AI-powered websites. Beautiful by default, infinitely extensible.",
+    "Merge, compress, convert and edit your PDFs online for free. Fast, secure and easy to use.",
 };
 
 export default function RootLayout({
