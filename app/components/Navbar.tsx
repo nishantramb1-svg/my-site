@@ -49,7 +49,7 @@ export default function Navbar() {
           {/* Auth */}
           <div className="flex items-center gap-3">
             {isSignedIn ? (
-              <UserButton afterSignOutUrl="/" />
+              <UserButton />
             ) : (
               <SignInButton mode="modal">
                 <motion.button
@@ -109,7 +109,7 @@ export default function Navbar() {
               <div className="mt-auto">
                 {isSignedIn ? (
                   <div className="flex items-center gap-3">
-                    <UserButton afterSignOutUrl="/" />
+                    <UserButton />
                     <SignOutButton>
                       <button className="text-sm" style={{ color: 'var(--muted)' }}>Sign out</button>
                     </SignOutButton>
