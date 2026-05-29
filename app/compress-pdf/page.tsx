@@ -4,16 +4,16 @@ import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, Download, Loader2, ArrowLeft, Minimize2, CheckCircle } from 'lucide-react';
+import { Upload, X, Download, Loader2, ArrowLeft, Minimize2, CheckCircle, Info } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import Navbar from '../components/Navbar';
 
 type Level = 'low' | 'medium' | 'high';
 
-const levels: { value: Level; label: string; desc: string; savings: string }[] = [
-  { value: 'low',    label: 'Low',    desc: 'Best quality, smaller reduction',  savings: '~20%' },
-  { value: 'medium', label: 'Medium', desc: 'Balanced quality and file size',    savings: '~45%' },
-  { value: 'high',   label: 'High',   desc: 'Smallest size, some quality loss',  savings: '~70%' },
+const levels: { value: Level; label: string; desc: string; quality: number }[] = [
+  { value: 'low',    label: 'Low',    desc: 'Best quality, smaller reduction',  quality: 0.85 },
+  { value: 'medium', label: 'Medium', desc: 'Balanced quality and file size',    quality: 0.60 },
+  { value: 'high',   label: 'High',   desc: 'Smallest size, some quality loss',  quality: 0.30 },
 ];
 
 function fmt(size: number) {
@@ -22,16 +22,21 @@ function fmt(size: number) {
     : `${(size / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function savingsLabel(original: number, compressed: number) {
+  const pct = ((1 - compressed / original) * 100).toFixed(0);
+  return `${pct}% smaller`;
+}
+
 export default function CompressPDFPage() {
   const [file, setFile] = useState<File | null>(null);
   const [level, setLevel] = useState<Level>('medium');
   const [isCompressing, setIsCompressing] = useState(false);
-  const [done, setDone] = useState(false);
+  const [result, setResult] = useState<{ blob: Blob; name: string } | null>(null);
 
   const onDrop = useCallback((accepted: File[]) => {
     if (accepted.length > 0) {
       setFile(accepted[0]);
-      setDone(false);
+      setResult(null);
       toast.success('File ready');
     }
   }, []);
@@ -45,39 +50,81 @@ export default function CompressPDFPage() {
   const compress = async () => {
     if (!file) { toast.error('Select a PDF first'); return; }
     setIsCompressing(true);
+    setResult(null);
+
     try {
+      // Strategy: render each PDF page to canvas via PDF.js (loaded from CDN),
+      // re-encode as JPEG at the chosen quality, then rebuild a new PDF with jsPDF.
+      // This gives real file-size reduction for image-heavy PDFs.
+
+      // Dynamically load PDF.js from CDN (no install needed)
+      const pdfjsLib = await loadPdfJs();
       const { jsPDF } = await import('jspdf');
-      const pdf = new jsPDF();
 
-      // Simulate compression by embedding file metadata
-      const multiplier = level === 'low' ? 0.8 : level === 'medium' ? 0.55 : 0.3;
-      const estimatedSize = (file.size * multiplier / 1024).toFixed(0);
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+      const numPages = pdfDoc.numPages;
 
-      pdf.setFontSize(22);
-      pdf.setTextColor(80, 40, 180);
-      pdf.text('PDFTools — Compressed Document', 20, 40);
-      pdf.setFontSize(13);
-      pdf.setTextColor(60, 60, 60);
-      pdf.text(`Original file: ${file.name}`, 20, 65);
-      pdf.text(`Original size: ${fmt(file.size)}`, 20, 82);
-      pdf.text(`Compression level: ${level.toUpperCase()}`, 20, 99);
-      pdf.text(`Estimated output size: ~${estimatedSize} KB`, 20, 116);
-      pdf.setFontSize(10);
-      pdf.setTextColor(120, 120, 120);
-      pdf.text('Full binary compression requires a server-side engine (coming soon).', 20, 150);
+      const selectedLevel = levels.find(l => l.value === level)!;
+      const quality = selectedLevel.quality;
 
-      // Simulate delay for UX
-      await new Promise((r) => setTimeout(r, 1200));
+      // Use first page to determine landscape vs portrait for output
+      const firstPage = await pdfDoc.getPage(1);
+      const firstVp = firstPage.getViewport({ scale: 1 });
+      const isLandscape = firstVp.width > firstVp.height;
 
-      pdf.save(`${file.name.replace('.pdf', '')}-compressed.pdf`);
-      setDone(true);
-      toast.success('Compressed PDF downloaded!');
+      const outPdf = new jsPDF({
+        orientation: isLandscape ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [firstVp.width, firstVp.height],
+        compress: true,
+      });
+
+      // Scale factor — lower quality levels use a coarser render scale
+      const renderScale = level === 'high' ? 1.0 : level === 'medium' ? 1.5 : 2.0;
+
+      for (let i = 1; i <= numPages; i++) {
+        const page = await pdfDoc.getPage(i);
+        const viewport = page.getViewport({ scale: renderScale });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d')!;
+
+        await page.render({ canvasContext: ctx, viewport }).promise;
+
+        const imgData = canvas.toDataURL('image/jpeg', quality);
+        const pageWidth = page.getViewport({ scale: 1 }).width;
+        const pageHeight = page.getViewport({ scale: 1 }).height;
+
+        if (i > 1) {
+          outPdf.addPage([pageWidth, pageHeight], pageWidth > pageHeight ? 'landscape' : 'portrait');
+        }
+
+        outPdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
+      }
+
+      const blob = outPdf.output('blob');
+      const outName = file.name.replace(/\.pdf$/i, `-compressed.pdf`);
+      setResult({ blob, name: outName });
+      toast.success('Compressed successfully!');
     } catch (e) {
-      toast.error('Compression failed');
       console.error(e);
+      toast.error('Compression failed — see console for details');
     } finally {
       setIsCompressing(false);
     }
+  };
+
+  const download = () => {
+    if (!result) return;
+    const url = URL.createObjectURL(result.blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = result.name;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -109,6 +156,13 @@ export default function CompressPDFPage() {
           <p style={{ color: 'var(--muted)' }}>
             Reduce your PDF file size while keeping it readable.
           </p>
+        </div>
+
+        {/* Info banner */}
+        <div className="flex items-start gap-3 rounded-xl px-4 py-3 mb-6 text-sm"
+          style={{ background: 'rgba(6,182,212,0.06)', border: '1px solid rgba(6,182,212,0.2)', color: 'var(--muted)' }}>
+          <Info size={16} className="shrink-0 mt-0.5" style={{ color: '#06b6d4' }} />
+          <p>Pages are rendered to images and re-encoded at the chosen quality. Works best on image-heavy PDFs. Text sharpness may reduce at High compression.</p>
         </div>
 
         {/* Dropzone */}
@@ -147,7 +201,7 @@ export default function CompressPDFPage() {
                   <p className="font-medium truncate text-sm">{file.name}</p>
                   <p className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>{fmt(file.size)}</p>
                 </div>
-                <button onClick={() => { setFile(null); setDone(false); }}
+                <button onClick={() => { setFile(null); setResult(null); }}
                   className="p-2 rounded-lg transition shrink-0"
                   style={{ color: '#f87171' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(248,113,113,0.1)'}
@@ -162,55 +216,95 @@ export default function CompressPDFPage() {
                 <div className="grid grid-cols-3 gap-3">
                   {levels.map((l) => (
                     <button key={l.value}
-                      onClick={() => setLevel(l.value)}
+                      id={`compress-level-${l.value}`}
+                      onClick={() => { setLevel(l.value); setResult(null); }}
                       className="card p-4 text-left transition-all"
                       style={{
                         borderColor: level === l.value ? '#06b6d4' : 'var(--border)',
                         boxShadow: level === l.value ? '0 0 16px rgba(6,182,212,0.2)' : 'none',
                       }}>
                       <p className="font-bold text-sm mb-0.5">{l.label}</p>
-                      <p className="text-xs mb-2" style={{ color: 'var(--muted)' }}>{l.desc}</p>
-                      <p className="text-xs font-semibold" style={{ color: '#06b6d4' }}>{l.savings} savings</p>
+                      <p className="text-xs" style={{ color: 'var(--muted)' }}>{l.desc}</p>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* CTA */}
-              {done ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="card p-5 flex items-center gap-4"
-                  style={{ borderColor: 'rgba(16,185,129,0.4)', background: 'rgba(16,185,129,0.06)' }}>
-                  <CheckCircle size={24} style={{ color: '#10b981', flexShrink: 0 }} />
-                  <div>
-                    <p className="font-semibold text-sm">Done! Your PDF was downloaded.</p>
-                    <button onClick={() => { setFile(null); setDone(false); }}
-                      className="text-xs mt-1 transition"
-                      style={{ color: 'var(--muted)' }}
-                      onMouseEnter={e => e.currentTarget.style.color = 'var(--text)'}
-                      onMouseLeave={e => e.currentTarget.style.color = 'var(--muted)'}>
-                      Compress another file →
-                    </button>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={compress}
-                  disabled={isCompressing}
-                  className="btn-primary w-full flex items-center justify-center gap-3 py-4 text-base">
-                  {isCompressing
-                    ? <><Loader2 size={18} className="animate-spin" /> Compressing…</>
-                    : <><Download size={18} /> Compress & Download</>}
-                </motion.button>
-              )}
+              {/* Result or CTA */}
+              <AnimatePresence mode="wait">
+                {result ? (
+                  <motion.div
+                    key="done"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="card p-5 flex items-center gap-4"
+                    style={{ borderColor: 'rgba(16,185,129,0.4)', background: 'rgba(16,185,129,0.06)' }}>
+                    <CheckCircle size={24} style={{ color: '#10b981', flexShrink: 0 }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm">
+                        Done! {fmt(result.blob.size)} &nbsp;
+                        <span style={{ color: '#10b981' }}>
+                          ({savingsLabel(file.size, result.blob.size)})
+                        </span>
+                      </p>
+                      <button onClick={() => { setFile(null); setResult(null); }}
+                        className="text-xs mt-1 transition"
+                        style={{ color: 'var(--muted)' }}
+                        onMouseEnter={e => e.currentTarget.style.color = 'var(--text)'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'var(--muted)'}>
+                        Compress another file →
+                      </button>
+                    </div>
+                    <motion.button
+                      id="compress-download-btn"
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={download}
+                      className="btn-primary flex items-center gap-2 text-sm px-4 py-2 shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #06b6d4, #0891b2)' }}>
+                      <Download size={16} /> Download
+                    </motion.button>
+                  </motion.div>
+                ) : (
+                  <motion.button
+                    key="cta"
+                    id="compress-submit-btn"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={compress}
+                    disabled={isCompressing}
+                    className="btn-primary w-full flex items-center justify-center gap-3 py-4 text-base">
+                    {isCompressing
+                      ? <><Loader2 size={18} className="animate-spin" /> Compressing…</>
+                      : <><Download size={18} /> Compress PDF</>}
+                  </motion.button>
+                )}
+              </AnimatePresence>
             </motion.div>
           </AnimatePresence>
         )}
       </main>
     </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Load PDF.js from cdnjs at runtime (no install required)
+// ---------------------------------------------------------------------------
+let _pdfjsCache: any = null;
+
+async function loadPdfJs(): Promise<any> {
+  if (_pdfjsCache) return _pdfjsCache;
+
+  // Dynamic import of the ESM build from CDN
+  const mod = await import(
+    /* webpackIgnore: true */
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs' as string
+  );
+  const lib = (mod as any).default ?? mod;
+  lib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+  _pdfjsCache = lib;
+  return lib;
 }
