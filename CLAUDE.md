@@ -115,6 +115,8 @@ When making widespread changes to a single file, **read the file → rewrite in 
 - **Do not install new major dependencies** without asking the user.
 - **Do not add `pages/` directory.** This project is App Router only; the presence of any `pages/` file will cause a routing conflict.
 - **Do not use Clerk hooks from memory.** The v7 API is different from v4/v5 and from training data. Always verify exports.
+- **`<UserButton>` does NOT accept `afterSignOutUrl` in Clerk v7.** That prop was removed. Post-sign-out redirect is configured on `<ClerkProvider>` or defaults to `/`. Using it causes a TypeScript build error.
+- **Framer-motion v12: `ease` in `Transition` must be typed as a literal, not `string`.** Write `ease: 'easeOut' as const` (or similar). Without `as const`, TypeScript infers `string` which fails the strict `Easing` type check at build time.
 - **The merge-pdf tool currently uses a jsPDF placeholder** (it writes metadata, not a true binary merge). Do not claim it performs a real binary merge — `pdf-lib` is not installed.
 - **The compress-pdf tool renders pages via PDF.js (CDN, `/* webpackIgnore: true */` dynamic import) to canvas, re-encodes as JPEG at the chosen quality, then rebuilds via jsPDF.** This is the real implementation — do not revert to the old placeholder approach.
 - **Loading external ESM from CDN inside Next.js requires `/* webpackIgnore: true */`** in the dynamic `import()` call. Without it, webpack tries to bundle the URL and throws.

@@ -35,6 +35,23 @@ export default function Navbar() {
             </span>
           </Link>
 
+          {/* ANR name tag */}
+          <motion.span
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.4, ease: 'easeOut' }}
+            className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold tracking-widest select-none"
+            style={{
+              background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(109,40,217,0.1))',
+              border: '1px solid rgba(139,92,246,0.4)',
+              color: '#c4b5fd',
+              boxShadow: '0 0 10px rgba(139,92,246,0.2)',
+              fontFamily: 'var(--font-syne), Syne, sans-serif',
+              letterSpacing: '0.15em',
+            }}>
+            ANR
+          </motion.span>
+
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1 flex-1">
             {links.map((link) => (
